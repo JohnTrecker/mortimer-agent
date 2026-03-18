@@ -29,6 +29,9 @@ packages = ["src/mortimer"]
 testpaths = ["tests"]
 pythonpath = ["src"]
 addopts = "--tb=short -v"
+markers = [
+    "embedding_integration: tests that load a real sentence-transformer model and hit real ChromaDB; exclude with -m 'not embedding_integration' for fast runs",
+]
 
 [tool.coverage.run]
 source = ["src/mortimer"]

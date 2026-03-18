@@ -17,14 +17,15 @@ def embedder():
     return Embedder("all-MiniLM-L6-v2")
 
 
-@pytest.fixture
-def populated_vector_store(tmp_path, embedder):
+@pytest.fixture(scope="session")
+def populated_vector_store(tmp_path_factory, embedder):
     """Create a temporary ChromaDB VectorStore pre-loaded with 6 topically distinct chunks."""
     from mortimer.models.schemas import DocumentChunk, DocumentMetadata
     from mortimer.retrieval.vector_store import VectorStore
 
+    tmp_dir = tmp_path_factory.mktemp("chroma")
     store = VectorStore(
-        persist_dir=tmp_path / "chroma",
+        persist_dir=tmp_dir / "chroma",
         collection_name="test_retrieval",
     )
 

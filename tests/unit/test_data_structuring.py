@@ -31,21 +31,20 @@ def _make_mock_response(raw_json: str) -> MagicMock:
 
 @pytest.fixture
 def llm_client(mocker):
-    """Return an LLMClient with openai.OpenAI patched out."""
-    mock_openai = MagicMock()
-    mocker.patch("openai.OpenAI", return_value=mock_openai)
+    """Return (LLMClient, mock_openai_client) with openai.OpenAI patched out."""
+    mock_openai_client = MagicMock()
+    mocker.patch("openai.OpenAI", return_value=mock_openai_client)
 
     from mortimer.generation.llm_client import LLMClient
 
-    client = LLMClient(api_key="sk-fake", model="test")
-    # Expose the underlying mock so individual tests can configure return values.
-    client._mock_openai = mock_openai
-    return client
+    client = LLMClient(api_key="test-api-key", model="test")
+    return client, mock_openai_client
 
 
-def _set_response(llm_client, raw_json: str) -> None:
+def _set_response(llm_client_tuple, raw_json: str) -> None:
     """Configure the mock to return raw_json as the next completion."""
-    llm_client._mock_openai.chat.completions.create.return_value = _make_mock_response(raw_json)
+    _client, mock_openai_client = llm_client_tuple
+    mock_openai_client.chat.completions.create.return_value = _make_mock_response(raw_json)
 
 
 # ---------------------------------------------------------------------------
@@ -58,6 +57,7 @@ class TestWellFormedLLMOutput:
         """Properly structured JSON with Source dicts should produce a RAGResponse."""
         from mortimer.models.schemas import RAGResponse
 
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "What is ML?",
@@ -67,7 +67,7 @@ class TestWellFormedLLMOutput:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "What is ML?"}])
+        result = client.generate([{"role": "user", "content": "What is ML?"}])
 
         assert isinstance(result, RAGResponse)
         assert result.question == "What is ML?"
@@ -76,17 +76,19 @@ class TestWellFormedLLMOutput:
 
     def test_empty_sources_list_accepted(self, llm_client):
         """sources=[] should produce a RAGResponse with an empty sources list."""
+        client, _ = llm_client
         payload = json.dumps(
             {"question": "Empty?", "answer": "Yes.", "sources": []}
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Empty?"}])
+        result = client.generate([{"role": "user", "content": "Empty?"}])
 
         assert result.sources == []
 
     def test_source_fields_are_typed_strings(self, llm_client):
         """Each Source should have str title, page, and url fields."""
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Q?",
@@ -98,7 +100,7 @@ class TestWellFormedLLMOutput:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Q?"}])
+        result = client.generate([{"role": "user", "content": "Q?"}])
 
         source = result.sources[0]
         assert isinstance(source.title, str)
@@ -114,6 +116,7 @@ class TestWellFormedLLMOutput:
 class TestAnswerCoercion:
     def test_dict_answer_coerced_to_json_string(self, llm_client):
         """When the LLM returns answer as a dict it must be coerced to a JSON string."""
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Compare A vs B",
@@ -123,13 +126,14 @@ class TestAnswerCoercion:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Compare A vs B"}])
+        result = client.generate([{"role": "user", "content": "Compare A vs B"}])
 
         assert isinstance(result.answer, str)
-        assert result.answer == '{"A": "fast", "B": "slow"}'
+        assert json.loads(result.answer) == {"A": "fast", "B": "slow"}
 
     def test_list_answer_coerced_to_json_string(self, llm_client):
         """When the LLM returns answer as a list it must be coerced to a JSON string."""
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "List items",
@@ -139,19 +143,20 @@ class TestAnswerCoercion:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "List items"}])
+        result = client.generate([{"role": "user", "content": "List items"}])
 
         assert isinstance(result.answer, str)
         assert result.answer == '["item1", "item2"]'
 
     def test_string_answer_unchanged(self, llm_client):
         """A string answer must pass through without modification."""
+        client, _ = llm_client
         payload = json.dumps(
             {"question": "Plain?", "answer": "plain text", "sources": []}
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Plain?"}])
+        result = client.generate([{"role": "user", "content": "Plain?"}])
 
         assert result.answer == "plain text"
 
@@ -166,6 +171,7 @@ class TestSourceCoercion:
         """Plain string sources should be wrapped into Source(title=s, page='', url='')."""
         from mortimer.models.schemas import Source
 
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Q?",
@@ -175,7 +181,7 @@ class TestSourceCoercion:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Q?"}])
+        result = client.generate([{"role": "user", "content": "Q?"}])
 
         assert len(result.sources) == 1
         src = result.sources[0]
@@ -198,6 +204,7 @@ class TestSourceCoercion:
         """
         from pydantic import ValidationError
 
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Q?",
@@ -208,7 +215,7 @@ class TestSourceCoercion:
         _set_response(llm_client, payload)
 
         with pytest.raises(ValidationError):
-            llm_client.generate([{"role": "user", "content": "Q?"}])
+            client.generate([{"role": "user", "content": "Q?"}])
 
 
 # ---------------------------------------------------------------------------
@@ -221,6 +228,7 @@ class TestSerializationFidelity:
         """model_dump_json() then model_validate_json() must produce an equal object."""
         from mortimer.models.schemas import RAGResponse
 
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Round trip?",
@@ -230,7 +238,7 @@ class TestSerializationFidelity:
         )
         _set_response(llm_client, payload)
 
-        original = llm_client.generate([{"role": "user", "content": "Round trip?"}])
+        original = client.generate([{"role": "user", "content": "Round trip?"}])
         json_str = original.model_dump_json()
         restored = RAGResponse.model_validate_json(json_str)
 
@@ -240,6 +248,7 @@ class TestSerializationFidelity:
         """model_dump() must contain exactly {question, answer, sources}.
         Each source must have exactly {title, page, url}.
         """
+        client, _ = llm_client
         payload = json.dumps(
             {
                 "question": "Contract?",
@@ -249,7 +258,7 @@ class TestSerializationFidelity:
         )
         _set_response(llm_client, payload)
 
-        result = llm_client.generate([{"role": "user", "content": "Contract?"}])
+        result = client.generate([{"role": "user", "content": "Contract?"}])
         dumped = result.model_dump()
 
         assert set(dumped.keys()) == {"question", "answer", "sources"}
@@ -267,15 +276,17 @@ class TestMalformedLLMOutput:
         """JSON missing the 'question' field should raise pydantic ValidationError."""
         from pydantic import ValidationError
 
+        client, _ = llm_client
         payload = json.dumps({"answer": "A.", "sources": []})
         _set_response(llm_client, payload)
 
         with pytest.raises(ValidationError):
-            llm_client.generate([{"role": "user", "content": "anything"}])
+            client.generate([{"role": "user", "content": "anything"}])
 
     def test_invalid_json_raises_json_decode_error(self, llm_client):
         """Non-JSON text returned by the LLM should raise json.JSONDecodeError."""
+        client, _ = llm_client
         _set_response(llm_client, "this is not json {{{")
 
         with pytest.raises(json.JSONDecodeError):
-            llm_client.generate([{"role": "user", "content": "anything"}])
+            client.generate([{"role": "user", "content": "anything"}])

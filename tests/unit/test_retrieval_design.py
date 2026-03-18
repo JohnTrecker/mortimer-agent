@@ -3,7 +3,13 @@
 These tests use real embeddings (all-MiniLM-L6-v2) and real ChromaDB to verify
 that the vector store exhibits meaningful semantic retrieval properties.
 No mocks — the tests prove the system's actual embedding quality.
+
+Marked with ``embedding_integration`` so they can be excluded from fast unit
+runs: ``pytest -m "not embedding_integration"``.
 """
+import pytest
+
+pytestmark = pytest.mark.embedding_integration
 
 
 class TestSemanticSimilarity:
