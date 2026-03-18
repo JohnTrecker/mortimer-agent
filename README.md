@@ -181,13 +181,13 @@ uv run ruff check src/ tests/
 ## Design Decisions
 
 ### PDF Parsing: PyMuPDF
-PyMuPDF (`fitz`) offers the best text extraction speed and quality for academic papers among Python PDF libraries. It handles multi-page documents reliably and exposes per-page access which is used to preserve page number metadata on each chunk.
+PyMuPDF (`fitz`) seems to offer the best text extraction speed and quality for academic papers among Python PDF libraries. It handles multi-page documents reliably and exposes per-page access which is used to preserve page number metadata on each chunk.
 
 ### Chunking: LangChain RecursiveCharacterTextSplitter
-Only the text splitter utility from LangChain is used, not the full chain/agent framework. This avoids LangChain lock-in while using its battle-tested chunking logic. The recursive splitter respects natural text boundaries (paragraphs, sentences) before falling back to character splits.
+Chosen because it's worked well in [RAG tutorials](https://github.com/NirDiamant/RAG_Techniques) I've used in the past. It's sentence-level chunking strategy also works well for academic papers. Confirm results with [tests/unit/test_chunking_strategy.py](tests/unit/test_chunking_strategy.py)
 
 ### Embeddings: sentence-transformers (local)
-`all-MiniLM-L6-v2` runs entirely locally. This eliminates per-embedding API costs, works offline after the initial model download (~90 MB), and has excellent quality/speed for semantic search over technical text. The tradeoff is a slightly longer first-run initialization time.
+`all-MiniLM-L6-v2` runs entirely locally. This eliminates per-embedding API costs, will avoid round-trip HTTP requests when we migrate this pipeline to a server, and works offline after the initial model download (~90 MB). It has good quality/speed for semantic search over technical text. The tradeoffs are a 512-token limit and slightly longer first-run initialization time.
 
 ### Vector Store: ChromaDB
 ChromaDB provides persistent local storage, built-in cosine similarity search, and metadata filtering with a clean Python API. Ingestion is idempotent: `has_document()` checks whether a source is already indexed before re-processing, and `add_chunks()` uses upsert semantics.
