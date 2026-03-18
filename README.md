@@ -42,7 +42,7 @@ Embedder (sentence-transformers / all-MiniLM-L6-v2)  -->  Vector Store (ChromaDB
 ### Installation
 
 ```bash
-git clone <repo-url>
+git clone github.com/johntrecker/mortimer-agent
 cd mortimer-agent
 cp .env.example .env
 # Edit .env and add your OPENAI_API_KEY
