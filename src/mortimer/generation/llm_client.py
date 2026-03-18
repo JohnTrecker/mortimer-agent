@@ -40,4 +40,8 @@ class LLMClient:
         )
         raw_content = response.choices[0].message.content
         data = json.loads(raw_content)
+        # Coerce answer to str: the LLM occasionally returns a nested dict or list
+        # despite prompt instructions to return a flat string.
+        if not isinstance(data.get("answer"), str):
+            data["answer"] = json.dumps(data["answer"])
         return RAGResponse(**data)

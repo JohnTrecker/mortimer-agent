@@ -95,6 +95,43 @@ class TestLLMClient:
         with pytest.raises((ValueError, Exception)):
             client.generate([{"role": "user", "content": "Q?"}])
 
+    def test_generate_coerces_dict_answer_to_string(self, mock_openai_client):
+        """LLM sometimes returns answer as a nested dict; it must be coerced to str."""
+        from mortimer.generation.llm_client import LLMClient
+
+        payload = json.dumps(
+            {
+                "question": "Compare human vs LLM thinking",
+                "answer": {"Human Thinking": {"Natural": "..."}, "LLM Thinking": "..."},
+                "sources": ["doc.pdf section 1"],
+            }
+        )
+        mock_openai_client.chat.completions.create.return_value = _make_chat_response(payload)
+
+        client = LLMClient(api_key="sk-fake", model="gpt-4o-mini")
+        result = client.generate([{"role": "user", "content": "Compare human vs LLM thinking"}])
+
+        assert isinstance(result.answer, str)
+        assert len(result.answer) > 0
+
+    def test_generate_coerces_list_answer_to_string(self, mock_openai_client):
+        """LLM sometimes returns answer as a list; it must be coerced to str."""
+        from mortimer.generation.llm_client import LLMClient
+
+        payload = json.dumps(
+            {
+                "question": "List the steps",
+                "answer": ["Step 1", "Step 2", "Step 3"],
+                "sources": [],
+            }
+        )
+        mock_openai_client.chat.completions.create.return_value = _make_chat_response(payload)
+
+        client = LLMClient(api_key="sk-fake", model="gpt-4o-mini")
+        result = client.generate([{"role": "user", "content": "List the steps"}])
+
+        assert isinstance(result.answer, str)
+
     def test_generate_openai_error_propagates(self, mock_openai_client):
         from openai import OpenAIError
 

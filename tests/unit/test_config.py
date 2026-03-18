@@ -42,14 +42,17 @@ class TestSettings:
         s = Settings()
         assert isinstance(s.pdf_download_dir, Path)
 
-    def test_settings_missing_api_key_raises(self, monkeypatch):
+    def test_settings_missing_api_key_raises(self, monkeypatch, tmp_path):
         monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        # Point env_file at a non-existent path so pydantic-settings cannot
+        # fall back to the real .env file that may exist in the working directory.
+        monkeypatch.setenv("ENV_FILE", str(tmp_path / ".env.missing"))
         from pydantic import ValidationError
 
         from mortimer.config import Settings
 
         with pytest.raises((ValidationError, Exception)):
-            Settings()
+            Settings(_env_file=str(tmp_path / ".env.missing"))
 
     def test_settings_custom_chunk_size(self, monkeypatch):
         monkeypatch.setenv("OPENAI_API_KEY", "sk-key")

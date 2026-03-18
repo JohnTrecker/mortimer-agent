@@ -4,4 +4,9 @@ Context:
 Question: {question}
 
 Provide a structured answer with specific citations to the numbered context sections.
-Return your response as JSON with fields: question, answer, sources (list of source attribution strings).
+Return your response as JSON with exactly these fields:
+- "question": the original question as a string
+- "answer": your answer as a single plain string (no nested objects or lists)
+- "sources": list of source attribution strings
+
+Example: {{"question": "...", "answer": "A clear prose answer here.", "sources": ["[1] doc.pdf p.2"]}}
