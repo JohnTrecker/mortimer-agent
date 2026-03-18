@@ -44,4 +44,9 @@ class LLMClient:
         # despite prompt instructions to return a flat string.
         if not isinstance(data.get("answer"), str):
             data["answer"] = json.dumps(data["answer"])
+        # Coerce sources: if the LLM returns plain strings instead of Source dicts,
+        # wrap each string as a Source with the raw text as title.
+        sources = data.get("sources", [])
+        if sources and isinstance(sources[0], str):
+            data["sources"] = [{"title": s, "page": "", "url": ""} for s in sources]
         return RAGResponse(**data)

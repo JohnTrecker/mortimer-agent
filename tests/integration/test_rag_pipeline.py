@@ -86,7 +86,8 @@ class TestRAGQueryIntegration:
         assert isinstance(data["question"], str)
         assert isinstance(data["answer"], str)
         assert isinstance(data["sources"], list)
-        assert all(isinstance(s, str) for s in data["sources"])
+        assert all(isinstance(s, dict) for s in data["sources"])
+        assert all({"title", "page", "url"} <= s.keys() for s in data["sources"])
 
     def test_ingest_then_reset_empties_store(
         self, mock_settings, fixture_pdf_path, mocker

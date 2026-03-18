@@ -102,12 +102,15 @@ class TestRetrievedChunk:
 
 class TestRAGResponse:
     def test_valid_rag_response(self):
-        from mortimer.models.schemas import RAGResponse
+        from mortimer.models.schemas import RAGResponse, Source
 
         resp = RAGResponse(
             question="What is X?",
             answer="X is Y.",
-            sources=["paper.pdf section 1", "paper.pdf section 2"],
+            sources=[
+                Source(title="Paper A", page="1", url="https://arxiv.org/pdf/1234"),
+                Source(title="Paper A", page="3", url="https://arxiv.org/pdf/1234"),
+            ],
         )
         assert resp.question == "What is X?"
         assert resp.answer == "X is Y."
@@ -120,11 +123,24 @@ class TestRAGResponse:
         assert resp.sources == []
 
     def test_rag_response_serializes_to_json(self):
-        from mortimer.models.schemas import RAGResponse
+        from mortimer.models.schemas import RAGResponse, Source
 
-        resp = RAGResponse(question="Q?", answer="A.", sources=["src1"])
+        resp = RAGResponse(
+            question="Q?",
+            answer="A.",
+            sources=[Source(title="Doc", page="2", url="")],
+        )
         data = resp.model_dump()
         assert set(data.keys()) == {"question", "answer", "sources"}
+        assert set(data["sources"][0].keys()) == {"title", "page", "url"}
+
+    def test_rag_response_source_fields(self):
+        from mortimer.models.schemas import Source
+
+        src = Source(title="Attention Is All You Need", page="5", url="https://arxiv.org/pdf/1706.03762")
+        assert src.title == "Attention Is All You Need"
+        assert src.page == "5"
+        assert src.url == "https://arxiv.org/pdf/1706.03762"
 
     def test_rag_response_missing_question_raises(self):
         from mortimer.models.schemas import RAGResponse

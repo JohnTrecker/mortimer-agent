@@ -7,6 +7,9 @@ Provide a structured answer with specific citations to the numbered context sect
 Return your response as JSON with exactly these fields:
 - "question": the original question as a string
 - "answer": your answer as a single plain string (no nested objects or lists)
-- "sources": list of source attribution strings
+- "sources": list of source objects, one per cited context section, each with:
+    - "title": the document title from the context label
+    - "page": the page number from the context label (e.g. "7")
+    - "url": the url from the context label, or "" if not present
 
-Example: {{"question": "...", "answer": "A clear prose answer here.", "sources": ["[1] doc.pdf p.2"]}}
+Use only values that appear in the context labels — do not invent titles, pages, or URLs.

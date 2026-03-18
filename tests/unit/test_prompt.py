@@ -49,7 +49,8 @@ class TestFormatContext:
 
         retrieved = [RetrievedChunk(chunk=c, score=0.9) for c in sample_chunks]
         result = format_context(retrieved)
-        assert "paper.pdf" in result
+        # format_context now uses title when available; sample_chunks have title="Test Paper"
+        assert "Test Paper" in result
 
     def test_format_context_includes_content(self, sample_chunks):
         from mortimer.generation.prompt import format_context

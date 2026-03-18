@@ -97,11 +97,13 @@ class RAGPipeline:
 
         title = extract_title(pdf_path)
         pages = extract_pages(pdf_path)
+        source_url = url if url.startswith("https://") else ""
         chunks = chunk_document(
             pages,
             title=title,
             chunk_size=self._settings.chunk_size,
             chunk_overlap=self._settings.chunk_overlap,
+            url=source_url,
         )
 
         if chunks:

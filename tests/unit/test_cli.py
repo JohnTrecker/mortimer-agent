@@ -88,10 +88,11 @@ class TestAskCommand:
         from mortimer.cli import cli
         from mortimer.models.schemas import RAGResponse
 
+        from mortimer.models.schemas import Source
         mock_pipeline.query.return_value = RAGResponse(
             question="What is attention?",
             answer="Attention is a mechanism.",
-            sources=["paper.pdf section 1"],
+            sources=[Source(title="Attention Is All You Need", page="1", url="")],
         )
 
         result = runner.invoke(cli, ["ask", "What is attention?"])

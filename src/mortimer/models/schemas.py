@@ -2,6 +2,14 @@
 from pydantic import BaseModel, ConfigDict
 
 
+class Source(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
+    title: str
+    page: str
+    url: str
+
+
 class DocumentMetadata(BaseModel):
     model_config = ConfigDict(frozen=True)
 
@@ -9,6 +17,7 @@ class DocumentMetadata(BaseModel):
     title: str
     page_number: int
     section: str = ""
+    url: str = ""
 
 
 class DocumentPage(BaseModel):
@@ -39,7 +48,7 @@ class RAGResponse(BaseModel):
 
     question: str
     answer: str
-    sources: list[str]
+    sources: list[Source]
 
 
 class IngestionResult(BaseModel):

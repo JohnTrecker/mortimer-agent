@@ -50,6 +50,7 @@ class VectorStore:
                 "title": c.metadata.title,
                 "page_number": c.metadata.page_number,
                 "section": c.metadata.section,
+                "url": c.metadata.url,
             }
             for c in chunks
         ]
@@ -138,6 +139,7 @@ def _parse_query_results(results: dict) -> list[RetrievedChunk]:
             title=meta["title"],
             page_number=int(meta["page_number"]),
             section=meta.get("section", ""),
+            url=meta.get("url", ""),
         )
         from mortimer.models.schemas import DocumentChunk
 

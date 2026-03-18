@@ -39,10 +39,12 @@ def format_context(chunks: list[RetrievedChunk]) -> str:
     parts = []
     for i, retrieved in enumerate(chunks, start=1):
         chunk = retrieved.chunk
-        source_label = f"{chunk.metadata.source}"
+        source_label = f"{chunk.metadata.title or chunk.metadata.source}"
         if chunk.metadata.section:
             source_label += f" | {chunk.metadata.section}"
         source_label += f" | page {chunk.metadata.page_number + 1}"
+        if chunk.metadata.url:
+            source_label += f" | url: {chunk.metadata.url}"
         parts.append(f"[{i}] ({source_label})\n{chunk.content}")
 
     return "\n\n".join(parts)

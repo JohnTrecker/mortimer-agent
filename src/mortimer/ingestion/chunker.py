@@ -18,6 +18,7 @@ def chunk_document(
     title: str,
     chunk_size: int = 1000,
     chunk_overlap: int = 200,
+    url: str = "",
 ) -> list[DocumentChunk]:
     """Split document pages into overlapping text chunks.
 
@@ -54,6 +55,7 @@ def chunk_document(
                 title=title,
                 page_number=page.page_number,
                 section=section,
+                url=url,
             )
             chunks.append(
                 DocumentChunk(
