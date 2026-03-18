@@ -1,0 +1,7 @@
+Context:
+{context}
+
+Question: {question}
+
+Provide a structured answer with specific citations to the numbered context sections.
+Return your response as JSON with fields: question, answer, sources (list of source attribution strings).
