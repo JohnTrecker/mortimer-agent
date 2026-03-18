@@ -1,5 +1,14 @@
 """Sentence-transformer based text embedder."""
+import logging
+
 from sentence_transformers import SentenceTransformer
+
+# Suppress "BertModel LOAD REPORT" key-mismatch warnings from transformers
+# and unauthenticated HF Hub request warnings. Progress bars are suppressed
+# via HF_HUB_DISABLE_PROGRESS_BARS set in cli.py before library imports.
+logging.getLogger("sentence_transformers").setLevel(logging.ERROR)
+logging.getLogger("transformers").setLevel(logging.ERROR)
+logging.getLogger("huggingface_hub").setLevel(logging.ERROR)
 
 
 class Embedder:

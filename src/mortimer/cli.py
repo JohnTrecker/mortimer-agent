@@ -1,5 +1,12 @@
 """Click CLI for the Mortimer RAG assistant."""
 import json
+import os
+
+# Must be set before any HuggingFace / transformers libraries are imported
+# so that tqdm and the hub client respect the flags at module-load time.
+os.environ.setdefault("HF_HUB_DISABLE_PROGRESS_BARS", "1")
+os.environ.setdefault("HF_HUB_DISABLE_IMPLICIT_TOKEN", "1")
+os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
 
 import click
 
